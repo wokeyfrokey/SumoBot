@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #DEFINE MAXMOTOR 255
 #DEFINE MINMOTOR 0
-//Hello from sofia change
 
 const int ENA=5;
 const int IN1=7;
@@ -12,8 +11,15 @@ const int ENB=6;
 const int IN3=9;
 const int IN4=10;
 
+const int LS_E = A0;
+const int LS_NE = A1;
+const int LS_N = A2;
+const int LS_NW = A3;
+const int LS_W = A4;
+
 const int backIR = 2;
-const int frontIR= 3;
+const int frontIR1 = 3;
+const int frontIR2 = 11;
 
 volatile bool back_reading = 0;
 volatile bool front_reading = 0;
@@ -121,6 +127,12 @@ void setup() {
 
   pinMode(backIR, INPUT);
   pinMode(frontIR, INPUT);
+
+  pinMode(LS_E, INPUT_PULLUP);
+  pinMode(LS_NE, INPUT_PULLUP);
+  pinMode(LS_N, INPUT_PULLUP);
+  pinMode(LS_NW, INPUT_PULLUP);
+  pinMode(LS_W, INPUT_PULLUP);
   Serial.begin(9600);
 
   // 🔴 FORCE SAFE STATE FIRST
