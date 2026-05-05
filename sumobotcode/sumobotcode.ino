@@ -16,6 +16,7 @@ const int LS_NE = A1;
 const int LS_N = A2;
 const int LS_NW = A3;
 const int LS_W = A4;
+const int LS_S = A5;
 
 const int backIR = 2;
 const int frontIR1 = 3;
@@ -137,6 +138,7 @@ void setup() {
   pinMode(LS_N, INPUT_PULLUP);
   pinMode(LS_NW, INPUT_PULLUP);
   pinMode(LS_W, INPUT_PULLUP);
+  pinMode(LS_S, INPUT_PULLUP);
   Serial.begin(9600);
 
   // 🔴 FORCE SAFE STATE FIRST
@@ -164,43 +166,63 @@ void readIR(){
 }
 
 void loop() {
-  unsigned long currentTime = millis(); // Get the current time
-  if (!isMovingForward) { //starts timer
-          startTime = currentTime; 
-          isMovingForward = true;
-  }
   switch(currentState){
     case SEARCH:
-      //reads IR sensor aka checks if need to go to RECOVERY
+      //checks if need to go to RECOVERY aka if it doesnt detect black surface
       readIR();
       if(back_reading == LOW || front_reading1 == LOW || front_reading2 == LOW){
         currentState = RECOVERY;
         break;
       }
 
-      //moves forward a bit
-      if (currentTime - startTime < 2000) { //moves forward for 2 seconds
-        vector2D move = {0, 150}; 
-        motorState = ConvertToWheelState(move);
-      } 
-      //scans the area and adjusts accordingly 
-      else{
-        if(LS_E == HIGH){
+      //moves forward until the side detects
+      if(LS_E == LOW || LS_NE == LOW || LS_NW == LOW || LS_W == LOW && LS_N == LOW){
+        //move forward
+        input.L = 255;
+        input.R = 255;
+      }
 
-        } else if(LS_NE == HIGH){
+      if(LS_E == HIGH || LS_NE = HIGH && LS_N == LOW){
+        //keep turning right until opp is in front
+        input.L = 255;
+        input.R = 150;
+      }
 
-        } else if(LS_N == HIGH){
-          
-        } else if(LS_NW == HIGH){
-          
-        } else if(LS_W == HIGH){
-          
-        }
+      if(LS_W == HIGH || LS_NW = HIGH && LS_N == LOW){
+        //keep turning left until opp is in front
+        input.L = 150;
+        input.R = 255;
+      }
+
+      if(LS_N == HIGH){
+        //if opp in front, then attack
+        currentState = ATTACK;
       }
       break;
     case RECOVERY:
       break;
     case ATTACK:
+      //paper test: moves forward slightly and checks forward sensor
+      //sets up millis so we dont hafta use delay
+      unsigned long currentTime = millis(); // Get the current time
+      if (!isMovingForward) { //starts timer
+              startTime = currentTime; 
+              isMovingForward = true;
+      }
+
+      //moves forward a bit quickly
+      if (currentTime - startTime < 1000) { 
+        input.L = 200;
+        input.R = 200;
+      }
+
+      if(LS_N == HIGH){  //full attack if there's sumn still there
+        input.L = 255;
+        input.R = 255;
+      } else{
+        input.L = -100;
+        input.R = -100;
+      }
       break;
     default:
       break;
