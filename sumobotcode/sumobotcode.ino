@@ -22,10 +22,15 @@ const int frontIR1 = 3;
 const int frontIR2 = 11;
 
 volatile bool back_reading = 0;
-volatile bool front_reading = 0;
+volatile bool front_reading1 = 0;
+volatile bool front_reading2 = 0;
 
 int motor1_speed = 0;
 int motor2_speed = 0;
+
+//setup for the millis timer
+unsigned long startTime = 0;   // Stores the moment the action started
+bool isMovingForward = false;  // A "flag" to track if we are in the middle of a timed move
 
 typedef enum enum_Direction{
   FORWARD,
@@ -66,14 +71,14 @@ void MotorFunction(wheelState input){
     }else if(input.L < 0){
       Motor1_Backward(-input.L);
     }else{
-      Motor1_Brake()
+      Motor1_Brake();
     }
     if(input.R > 0){
       Motor2_Forward(input.R);
     }else if(input.R < 0){
       Motor2_Backward(-input.R);
     }else{
-      Motor2_Brake()
+      Motor2_Brake();
     }
 }
 
@@ -115,8 +120,6 @@ void Motor2_Brake()
 }
 
 void setup() {
-
-  
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(ENA, OUTPUT);
@@ -126,7 +129,8 @@ void setup() {
   pinMode(ENB, OUTPUT);
 
   pinMode(backIR, INPUT);
-  pinMode(frontIR, INPUT);
+  pinMode(frontIR1, INPUT);
+  pinMode(frontIR2, INPUT);
 
   pinMode(LS_E, INPUT_PULLUP);
   pinMode(LS_NE, INPUT_PULLUP);
@@ -153,23 +157,57 @@ int lerp(int a, int b, float factor){
   return a + (b - a) * factor;
 }
 
+void readIR(){
+  back_reading = digitalRead(backIR);
+  front_reading1 = digitalRead(frontIR1);
+  front_reading2 = digitalRead(frontIR2);
+}
 
 void loop() {
+  unsigned long currentTime = millis(); // Get the current time
+  if (!isMovingForward) { //starts timer
+          startTime = currentTime; 
+          isMovingForward = true;
+  }
   switch(currentState){
     case SEARCH:
+      //reads IR sensor aka checks if need to go to RECOVERY
+      readIR();
+      if(back_reading == LOW || front_reading1 == LOW || front_reading2 == LOW){
+        currentState = RECOVERY;
+        break;
+      }
+
+      //moves forward a bit
+      if (currentTime - startTime < 2000) { //moves forward for 2 seconds
+        vector2D move = {0, 150}; 
+        motorState = ConvertToWheelState(move);
+      } 
+      //scans the area and adjusts accordingly 
+      else{
+        if(LS_E == HIGH){
+
+        } else if(LS_NE == HIGH){
+
+        } else if(LS_N == HIGH){
+          
+        } else if(LS_NW == HIGH){
+          
+        } else if(LS_W == HIGH){
+          
+        }
+      }
       break;
     case RECOVERY:
       break;
     case ATTACK:
       break;
     default:
+      break;
   }
-  motorFunction(motorState);
+  MotorFunction(motorState);
 }
-void readIR(){
-  back_reading = digitalRead(backIR);
-  front_reading = digitalRead(frontIR);
-}
+
 
 
 
